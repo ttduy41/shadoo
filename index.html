@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADOW SHOP - VIP SYSTEM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #7b2cbf; --cyan: #00f2ff; --bg: #050505; --card: #12141d; --text: #e2e8f0; --green: #00ff88; --red: #ff4d4d; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; }
+        .header { background: var(--card); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); position: sticky; top: 0; z-index: 100; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #2d334a; margin-bottom: 20px; }
+        .input-pro { width: 100%; padding: 12px; margin: 8px 0; background: #080a12; border: 1px solid #333; color: white; border-radius: 10px; outline: none; }
+        .btn-main { width: 100%; padding: 15px; background: var(--cyan); border: none; font-weight: 900; cursor: pointer; border-radius: 10px; color: #000; transition: 0.3s; }
+        .btn-main:disabled { background: #555; cursor: not-allowed; }
+        .receive-box { background: rgba(0, 255, 136, 0.1); border-radius: 10px; padding: 12px; margin: 10px 0; border: 1px dashed var(--green); text-align: center; }
+        .price-big { color: var(--green); font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div style="font-weight:900;">SHADOW <span style="color:var(--cyan)">SHOP</span></div>
+        <div id="top-balance" style="color:var(--green); font-weight:bold; border: 1px solid var(--green); padding: 4px 10px; border-radius: 15px;">0đ</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h3 style="text-align:center; color:var(--cyan); margin-top:0;">NẠP THẺ CÀO AUTO</h3>
+            <label>Loại thẻ:</label>
+            <select id="card-type" class="input-pro" onchange="updateExchange()">
+                <option value="Viettel">Viettel (Chiết khấu 13%)</option>
+                <option value="Vinaphone">Vinaphone (Chiết khấu 11%)</option>
+                <option value="Mobifone">Mobifone (Chiết khấu 18%)</option>
+                <option value="Garena">Garena (Chiết khấu 12.5%)</option>
+                <option value="Zing">Zing (Chiết khấu 12.5%)</option>
+            </select>
+
+            <label>Mệnh giá:</label>
+            <select id="card-amount" class="input-pro" onchange="updateExchange()">
+                <option value="10000">10.000đ</option>
+                <option value="20000">20.000đ</option>
+                <option value="50000">50.000đ</option>
+                <option value="100000">100.000đ</option>
+                <option value="200000">200.000đ</option>
+                <option value="500000">500.000đ</option>
+            </select>
+
+            <div class="receive-box">
+                <small>Tiền thực nhận trên web:</small><br>
+                <span id="receive-val" class="price-big">8.700đ</span>
+            </div>
+
+            <input type="text" id="seri" class="input-pro" placeholder="Nhập số Seri thẻ">
+            <input type="text" id="pin" class="input-pro" placeholder="Nhập mã thẻ (PIN)">
+            
+            <button id="btn-submit" class="btn-main" onclick="handleDeposit()">GỬI THẺ CÀO</button>
+            <p id="status-msg" style="text-align:center; font-size:13px; color:#aaa; margin-top:10px;">Thẻ sẽ được duyệt tự động sau khi gửi.</p>
+        </div>
+    </div>
+
+    <script>
+        // Link Apps Script của Vinh đã được cấu hình
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbo7j9J0qaavELdVe7Vc27i08vLr-fUjuYN2-_YrPezbBbWz5LdA0Fa6YQpjeWjTm7/exec";
+        
+        const FEES = { "Viettel": 0.13, "Vinaphone": 0.11, "Mobifone": 0.18, "Garena": 0.125, "Zing": 0.125 };
+        
+        // Giả sử tên khách hàng đang đăng nhập (Vinh có thể kết nối với hệ thống login của bạn)
+        let username = "vinh_test_01"; 
+
+        function updateExchange() {
+            let t = document.getElementById('card-type').value;
+            let a = document.getElementById('card-amount').value;
+            let net = a * (1 - (FEES[t] || 0));
+            document.getElementById('receive-val').innerText = Math.floor(net).toLocaleString() + "đ";
+        }
+
+        async function handleDeposit() {
+            let t = document.getElementById('card-type').value;
+            let a = document.getElementById('card-amount').value;
+            let s = document.getElementById('seri').value.trim();
+            let p = document.getElementById('pin').value.trim();
+            let r = document.getElementById('receive-val').innerText;
+
+            if(!s || !p) return alert("Bạn chưa nhập Seri hoặc mã PIN!");
+
+            let btn = document.getElementById('btn-submit');
+            btn.innerText = "ĐANG GỬI...";
+            btn.disabled = true;
+
+            try {
+                // Gửi yêu cầu nạp tiền sang Google Script
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "deposit",
+                        user: username,
+                        type: t,
+                        amount: a,
+                        receive: r,
+                        seri: s,
+                        pin: p
+                    })
+                });
+
+                alert("Gửi thẻ thành công! Vui lòng kiểm tra Telegram để Duyệt.");
+                document.getElementById('seri').value = "";
+                document.getElementById('pin').value = "";
+            } catch (err) {
+                alert("Lỗi hệ thống, vui lòng thử lại sau!");
+            } finally {
+                btn.innerText = "GỬI THẺ CÀO";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
